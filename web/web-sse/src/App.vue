@@ -69,69 +69,16 @@
               <ViewExpand :row="props.row" />
             </template>
           </el-table-column>
-          <el-table-column
-            prop="hostname"
-            label="名称"
-            sortable
-            min-width="130"
-          >
-            <template #default="props">
-              <el-text
-                :type="
-                  props.row.online
-                    ? props.row.nick
-                      ? props.row.nick.workType
-                        ? props.row.nick.workType.webhookUrl !== ''
-                          ? 'warning'
-                          : 'success'
-                        : 'success'
-                      : 'success'
-                    : 'none'
-                "
-                >{{ getClientName(props.row) }}
-              </el-text>
-            </template>
-          </el-table-column>
-          <el-table-column prop="ip" label="IP" sortable min-width="135" />
-          <el-table-column prop="signal" label="信号强度" sortable />
-          <el-table-column prop="freq" label="无线频段" sortable />
-          <el-table-column
-            prop="mac"
-            label="Mac地址"
-            sortable
-            v-if="!isMobile()"
-          />
-          <el-table-column
-            prop="starTime"
-            label="连接时间"
-            sortable
-            v-if="!isMobile()"
-          >
-            <template #default="props">
-              {{ formatTimeStamp(props.row.starTime) }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            prop="online"
-            label="状态"
-            sortable
-            min-width="80"
-            align="center"
-          >
-            <template #default="scope">
-              <el-tag v-if="scope.row.online" type="success">在线</el-tag>
-              <el-tag v-else type="danger">离线</el-tag>
-            </template>
-          </el-table-column>
+          <el-table-column prop="id" label="id" sortable min-width="135" />
+          <el-table-column prop="groupId" label="groupId" sortable />
+          <el-table-column prop="ipAddress" label="IP地址" sortable />
+          <el-table-column prop="macAddress" label="Mac地址" sortable />
           <el-table-column label="操作" max="80" fixed="right" align="center">
             <template #default="{ row }">
               <el-dropdown trigger="click">
                 <el-button type="text">菜单</el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <!--                    <el-dropdown-item @click="handleShowStaitcIpDialog(row)"-->
-                    <!--                      >静态IP-->
-                    <!--                    </el-dropdown-item>-->
                     <el-dropdown-item @click="handleShowDeviceSetting(row)"
                       >设备设置
                     </el-dropdown-item>
@@ -196,7 +143,6 @@
   </el-dialog>
 
   <StaticIpListDialog ref="staticIpListDialogRef" />
-  <!--  <ClientStaticIpSettingDialog ref="clientStaticIpDialogRef" />-->
   <ClientSettingDialog ref="deviceSettingDialogRef" />
   <UpgradeDialog ref="upgradeRef" />
   <ClientTimeLineDialog ref="clientTimeLineDialogRef" />
@@ -205,27 +151,22 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useDark, useToggle } from '@vueuse/core'
-import { Client } from './utils/type.ts'
+import { Client, SseClient } from './utils/type.ts'
 import ClientTimeLineDialog from './components/ClientTimeLineDialog.vue'
 import {
-  isMobile,
   showErrorTips,
   showLoading,
   showSucessTips,
   showTips,
   showWarmDialog,
   showWarmTips,
-  formatTimeStamp,
   xhrPromise,
-  formatToUTC8,
   Prompt,
 } from './utils/utils.ts'
-import { EventAwareSSEClient } from './utils/sseclient.ts'
 import ViewExpand from './components/expand/ViewExpand.vue'
 import UpgradeDialog from './components/expand/UpgradeDialog.vue'
 import StaticIpListDialog from './components/StaticIpListDialog.vue'
 import ClientSettingDialog from './components/ClientSettingDialog.vue'
-import { ElNotification } from 'element-plus'
 
 const title = ref<string>('客户端列表')
 const clientTimeLineDialogRef = ref<InstanceType<
@@ -252,67 +193,50 @@ const customColors = [
   { color: '#1989fa', percentage: 80 },
   { color: '#6f7ad3', percentage: 100 },
 ]
-const appinfo = ref<any>()
+// const appinfo = ref<any>()
 const globalProgress = ref(0)
 const isDark = useDark()
 const darkmodeSwitch = ref(isDark)
 const toggleDark = useToggle(isDark)
-const source = ref<EventAwareSSEClient | null>()
+// const source = ref<EventAwareSSEClient | null>()
 // 搜索关键字
 const searchKeyword = ref<string>('')
 const pageSize = ref<number>(50)
 const currentPage = ref<number>(1)
-const tableData = ref<Client[]>([])
+const tableData = ref<SseClient[]>([])
 // 分页后的表格数
-const paginatedTableData = computed<Client[]>(() => {
+const paginatedTableData = computed<SseClient[]>(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
   return filteredTableData.value.slice(start, end)
 })
 // 过滤后的表格数据（根据搜索关键字）
-const filteredTableData = computed<Client[]>(() => {
+const filteredTableData = computed<SseClient[]>(() => {
   return tableData.value.filter(() => !searchKeyword.value)
 })
 
 function renderTable(data: any) {
-  tableData.value = data as Client[]
+  tableData.value = data as SseClient[]
 }
 
-function getClientName(row: Client): string {
-  // row.nickName === ''
-  //   ? row.hostname
-  //   : row.hostname === '*'
-  //     ? row.nickName
-  //     : `${row.hostname}(${row.nickName})`
-  if (row.nick) {
-    if (row.nick?.name === '') {
-      return row.hostname
-    } else {
-      return row.nick?.name
-    }
-  } else {
-    return row.hostname
-  }
-}
-
-const getVersion = () => {
-  // versionDialogVisible.value = true
-  fetch('../api/version', { credentials: 'include', method: 'GET' })
-    .then((res) => {
-      return res.json()
-    })
-    .then((json) => {
-      if (json && json.code === 0 && json.data) {
-        appinfo.value = json.data
-        if (json.data && json.data.appVersion) {
-          title.value = `客户端列表 ${json.data.appVersion}`
-        }
-      }
-    })
-    .catch(() => {
-      showErrorTips('失败')
-    })
-}
+// const getVersion = () => {
+//   // versionDialogVisible.value = true
+//   // fetch('../api/version', { credentials: 'include', method: 'GET' })
+//   //   .then((res) => {
+//   //     return res.json()
+//   //   })
+//   //   .then((json) => {
+//   //     if (json && json.code === 0 && json.data) {
+//   //       appinfo.value = json.data
+//   //       if (json.data && json.data.appVersion) {
+//   //         title.value = `客户端列表 ${json.data.appVersion}`
+//   //       }
+//   //     }
+//   //   })
+//   //   .catch(() => {
+//   //     showErrorTips('失败')
+//   //   })
+// }
 
 const handleWebhookSetting = () => {
   Prompt('请输入WebHook地址', 'webhook设置', '').then((result) => {
@@ -425,9 +349,6 @@ const handleUpdate = () => {
 }
 
 const fetchData = () => {
-  const timestamp = 1752266198
-
-  console.log('fetchData', formatToUTC8(timestamp))
   fetch(`../api/clients/get`, {
     credentials: 'include',
     method: 'GET',
@@ -599,94 +520,94 @@ const updateDialogWidth = () => {
   }
 }
 
-const connectSSE = () => {
-  try {
-    const sseUrl = `../api/client/sse`
-    console.log('connectSSE', sseUrl)
-    source.value = new EventAwareSSEClient(sseUrl)
-    source.value.addEventListener('updateAll', (data) => {
-      console.log('updateAll', data)
-      renderTable(data)
-    })
-    source.value.addEventListener('showNotify', (data) => {
-      console.log('showNotify', data)
-      updateTableByOne(data)
-      showNotifyMessage(data)
-    })
-    source.value.addEventListener('updateOne', (data) => {
-      console.log('update-status', data)
-      updateTableByOne(data)
-    })
-    source.value.connect()
-  } catch (e) {
-    console.error('connectSSE err', e)
-  }
-}
+// const connectSSE = () => {
+//   // try {
+//   //   const sseUrl = `../api/client/sse`
+//   //   console.log('connectSSE', sseUrl)
+//   //   source.value = new EventAwareSSEClient(sseUrl)
+//   //   source.value.addEventListener('updateAll', (data) => {
+//   //     console.log('updateAll', data)
+//   //     renderTable(data)
+//   //   })
+//   //   source.value.addEventListener('showNotify', (data) => {
+//   //     console.log('showNotify', data)
+//   //     updateTableByOne(data)
+//   //     showNotifyMessage(data)
+//   //   })
+//   //   source.value.addEventListener('updateOne', (data) => {
+//   //     console.log('update-status', data)
+//   //     updateTableByOne(data)
+//   //   })
+//   //   source.value.connect()
+//   // } catch (e) {
+//   //   console.error('connectSSE err', e)
+//   // }
+// }
 
-function updateTableByOne(cls: Client) {
-  console.log('updateTableByOne', cls)
-  if (tableData.value) {
-    // const newTableData = tableData.value.map((item: Client) => {
-    //   item.mac === cls.mac ? { ...item, online: cls.online } : item
-    // })
-    // console.log('updateTableByOne', newTableData)
-    // renderTable(newTableData)
-    const index = tableData.value.findIndex((item) => item.mac === cls.mac)
-    if (index !== -1) {
-      tableData.value.forEach((item: Client) => {
-        if (item.mac === cls.mac) {
-          item.starTime = cls.starTime
-          item.online = cls.online
-          item.freq = cls.freq
-          item.signal = cls.signal
-        }
-      })
-    } else {
-      tableData.value.push(cls)
-    }
-  }
-}
+// function updateTableByOne(cls: Client) {
+//   console.log('updateTableByOne', cls)
+//   // if (tableData.value) {
+//   //   // const newTableData = tableData.value.map((item: Client) => {
+//   //   //   item.mac === cls.mac ? { ...item, online: cls.online } : item
+//   //   // })
+//   //   // console.log('updateTableByOne', newTableData)
+//   //   // renderTable(newTableData)
+//   //   const index = tableData.value.findIndex((item) => item.mac === cls.mac)
+//   //   if (index !== -1) {
+//   //     tableData.value.forEach((item: Client) => {
+//   //       if (item.mac === cls.mac) {
+//   //         item.starTime = cls.starTime
+//   //         item.online = cls.online
+//   //         item.freq = cls.freq
+//   //         item.signal = cls.signal
+//   //       }
+//   //     })
+//   //   } else {
+//   //     tableData.value.push(cls)
+//   //   }
+//   // }
+// }
 
-function showNotifyMessage(cls: Client) {
-  if (cls) {
-    let name = ''
-    if (cls.nick) {
-      if (cls.nick.name !== '') {
-        name = cls.nick.name
-      }
-    }
-
-    if (name === '') {
-      if (cls.online) {
-        ElNotification({
-          title: `未知设备上线了`,
-          message: `mac地址:${cls.mac}`,
-          type: 'success',
-        })
-      } else {
-        ElNotification({
-          title: `未知设备离线了`,
-          message: `mac地址:${cls.mac}`,
-          type: 'warning',
-        })
-      }
-    } else {
-      if (cls.online) {
-        ElNotification({
-          title: `${name}上线了`,
-          message: `mac地址:${cls.mac}`,
-          type: 'success',
-        })
-      } else {
-        ElNotification({
-          title: `${name}离线了`,
-          message: `mac地址:${cls.mac}`,
-          type: 'warning',
-        })
-      }
-    }
-  }
-}
+// function showNotifyMessage(cls: Client) {
+//   if (cls) {
+//     let name = ''
+//     if (cls.nick) {
+//       if (cls.nick.name !== '') {
+//         name = cls.nick.name
+//       }
+//     }
+//
+//     if (name === '') {
+//       if (cls.online) {
+//         ElNotification({
+//           title: `未知设备上线了`,
+//           message: `mac地址:${cls.mac}`,
+//           type: 'success',
+//         })
+//       } else {
+//         ElNotification({
+//           title: `未知设备离线了`,
+//           message: `mac地址:${cls.mac}`,
+//           type: 'warning',
+//         })
+//       }
+//     } else {
+//       if (cls.online) {
+//         ElNotification({
+//           title: `${name}上线了`,
+//           message: `mac地址:${cls.mac}`,
+//           type: 'success',
+//         })
+//       } else {
+//         ElNotification({
+//           title: `${name}离线了`,
+//           message: `mac地址:${cls.mac}`,
+//           type: 'warning',
+//         })
+//       }
+//     }
+//   }
+// }
 
 // 初始化监听
 onMounted(() => {
@@ -697,8 +618,8 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', updateDialogWidth)
 })
-getVersion()
-connectSSE()
+// getVersion()
+// connectSSE()
 fetchData()
 </script>
 

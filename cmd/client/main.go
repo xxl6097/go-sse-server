@@ -2,7 +2,12 @@ package main
 
 import (
 	"bufio"
+	"fmt"
+	"github.com/xxl6097/glog/glog"
+	"github.com/xxl6097/go-http/pkg/util"
+	"github.com/xxl6097/go-sse/pkg/sse"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -20,7 +25,7 @@ func (c *SSEClient) Connect() {
 			return
 		default:
 			req, _ := http.NewRequest("GET", c.URL, nil)
-			req.SetBasicAuth("admin", "admin")
+			req.SetBasicAuth("admin", "het002402")
 			req.Header.Set("Accept", "text/event-stream")
 			client := &http.Client{Timeout: 0} // 无超时限制
 			resp, err := client.Do(req)
@@ -51,10 +56,36 @@ func (c *SSEClient) Connect() {
 
 func (c *SSEClient) Close() {
 }
+func GetLocalMac() string {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		fmt.Println("获取网络接口失败：", err)
+		return ""
+	}
+	for _, iface := range interfaces {
+		if iface.Flags&net.FlagUp != 0 && iface.HardwareAddr != nil {
+			devMac := strings.ReplaceAll(iface.HardwareAddr.String(), ":", "")
+			fmt.Println(iface.Name, ":", devMac)
+			return devMac
+		}
+	}
+	return ""
+}
+
 func main() {
-	client := &SSEClient{URL: "http://192.168.1.2:8080/api/sse", done: make(chan struct{})}
-	go client.Connect()
+	//client := &SSEClient{URL: "http://uuxia.cn:7001/api/sse", done: make(chan struct{})}
+	//go client.Connect()
 	//time.Sleep(30 * time.Second) // 模拟运行
 	//client.Close()               // 主动关闭
+
+	url := "http://uuxia.cn:7001/api/sse"
+	sse.NewClient(url).
+		BasicAuth("admin", "het002402").
+		ListenFunc(func(s string) {
+			glog.Debugf("SSE: %s", s)
+		}).Header(func(header *http.Header) {
+		header.Add("Sse-Event-IP-Address", util.GetHostIp())
+		header.Add("Sse-Event-MAC-Address", GetLocalMac())
+	}).Done()
 	select {}
 }

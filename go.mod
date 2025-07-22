@@ -7,9 +7,14 @@ require (
 	github.com/xxl6097/glog v0.1.48
 )
 
-require github.com/xxl6097/go-http v0.0.35
+require (
+	github.com/kardianos/service v1.2.4
+	github.com/xxl6097/go-http v0.0.35
+	github.com/xxl6097/go-service v0.6.40
+	github.com/xxl6097/go-sse v0.0.22
+)
 
 require (
-	github.com/xxl6097/go-service v0.6.40 // indirect
-	github.com/xxl6097/go-sse v0.0.16 // indirect
+	github.com/xxl6097/go-update v0.0.6 // indirect
+	golang.org/x/sys v0.34.0 // indirect
 )

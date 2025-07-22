@@ -64,3 +64,10 @@ export interface Client {
   online: boolean
   statusList: Status[]
 }
+
+export interface SseClient {
+  id: string
+  groupId: string
+  ipAddress: string
+  macAddress: string
+}

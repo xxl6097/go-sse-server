@@ -15,5 +15,5 @@ func init() {
 }
 func main() {
 	fmt.Println("Hello World")
-	server.Serve()
+	server.Serve("admin", "admin", 9999)
 }
