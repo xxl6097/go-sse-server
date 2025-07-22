@@ -1,0 +1,12 @@
+github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
+github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
+github.com/xxl6097/glog v0.1.48 h1:fj2ptSMqz/P3oSm9pUF0f79Rt1mIB06TYjbuL+SilW0=
+github.com/xxl6097/glog v0.1.48/go.mod h1:v5J5FG6rnsHhv74uO9GRdqKsdvthvnQqjBooYP0V5Dg=
+github.com/xxl6097/go-http v0.0.33 h1:iDzekpvqEN2J4vQtA8O2MhCUCmFFgdLrj61rrwaZJNE=
+github.com/xxl6097/go-http v0.0.33/go.mod h1:a5XNz2BVgSZWTJ4tGh1+KWMntk7lCslqYphL2ZsDCW0=
+github.com/xxl6097/go-http v0.0.35 h1:6UVrh25enRssM1hGSke3CHfc0+vMIP9vZT4wEWka4v8=
+github.com/xxl6097/go-http v0.0.35/go.mod h1:a5XNz2BVgSZWTJ4tGh1+KWMntk7lCslqYphL2ZsDCW0=
+github.com/xxl6097/go-service v0.6.40 h1:TSLn3ASrjHanQNBVBk9vhc4ii7syfvuxMXHom2EUpWI=
+github.com/xxl6097/go-service v0.6.40/go.mod h1:Abn7TKsMm5ZqUpybL41AesioRuxoyoZBOEL4KQOPeWg=
+github.com/xxl6097/go-sse v0.0.16 h1:FYbrBaCWhqJRY467TfLFc8221nZRa6CnUBn5O2VvHA0=
+github.com/xxl6097/go-sse v0.0.16/go.mod h1:5UuNGLbWcmyQmRZpNQVGq3/VDMCRcAz6YBdJKl2RSEM=
